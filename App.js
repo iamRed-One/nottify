@@ -72,6 +72,11 @@ function LecturerNavigator() {
         component={LecturerHomeScreen}
         options={{ title: 'Dashboard' }}
       />
+      <Stack.Screen
+        name="RoomFeed"
+        component={RoomFeedScreen}
+        options={{ title: 'Room', headerShown: true }}
+      />
     </Stack.Navigator>
   );
 }
@@ -93,7 +98,7 @@ function RepNavigator() {
       <Stack.Screen
         name="RoomFeed"
         component={RoomFeedScreen}
-        options={{ title: 'Room' }}
+        options={{ title: 'Room', headerShown: true }}
       />
     </Stack.Navigator>
   );

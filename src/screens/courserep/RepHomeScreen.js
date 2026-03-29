@@ -8,6 +8,13 @@ export default function RepHomeScreen({ navigation }) {
   const { user, signOut } = useAuth();
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const semester = currentMonth <= 6 ? 1 : 2;
+  const roomId = user?.department && user?.level
+    ? `${user.department}_${user.level}L_${currentYear}_SEM${semester}`
+    : null;
+
   const initials = user?.displayName
     ? user.displayName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : 'R';
@@ -46,7 +53,7 @@ export default function RepHomeScreen({ navigation }) {
 
         <TouchableOpacity
           className="bg-white border border-gray-200 rounded-xl py-4 flex-row items-center px-5 gap-3"
-          onPress={() => navigation.navigate('RoomFeed')}
+          onPress={() => navigation.navigate('RoomFeed', { roomId })}
           activeOpacity={0.85}
         >
           <Ionicons name="chatbubbles-outline" size={18} color="#374151" />

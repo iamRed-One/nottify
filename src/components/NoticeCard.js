@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 
 function formatTime(timestamp) {
   if (!timestamp) return '';
@@ -10,63 +10,30 @@ function formatTime(timestamp) {
   });
 }
 
-/**
- * @param {{ notice: object, showMeta?: boolean, onPress?: () => void }} props
- */
 export default function NoticeCard({ notice, showMeta = false, onPress }) {
   const Wrapper = onPress ? TouchableOpacity : View;
 
   return (
-    <Wrapper style={styles.card} onPress={onPress} activeOpacity={0.75}>
-      <Text style={styles.title}>{notice?.title}</Text>
-      <Text style={styles.body} numberOfLines={showMeta ? 3 : undefined}>
+    <Wrapper
+      className="bg-white border border-gray-100 rounded-2xl p-4 mb-3"
+      style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <Text className="text-sm text-gray-900 font-jakarta-bold mb-1.5">{notice?.title}</Text>
+      <Text className="text-sm text-gray-500 font-jakarta leading-5" numberOfLines={showMeta ? 3 : undefined}>
         {notice?.body}
       </Text>
 
       {showMeta && (
-        <View style={styles.meta}>
-          <Text style={styles.poster}>
+        <View className="flex-row justify-between mt-3 pt-3 border-t border-gray-50">
+          <Text className="text-xs text-gray-400 font-jakarta-semi">
             {notice?.postedByName || 'Unknown'}
             {notice?.postedByRole ? ` · ${notice.postedByRole}` : ''}
           </Text>
-          <Text style={styles.time}>{formatTime(notice?.createdAt)}</Text>
+          <Text className="text-xs text-gray-300 font-jakarta">{formatTime(notice?.createdAt)}</Text>
         </View>
       )}
     </Wrapper>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 6,
-  },
-  body: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-  },
-  meta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-  },
-  poster: { fontSize: 12, color: '#6B7280', fontWeight: '600' },
-  time: { fontSize: 12, color: '#9CA3AF' },
-});
