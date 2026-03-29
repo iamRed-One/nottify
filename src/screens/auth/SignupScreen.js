@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
@@ -18,9 +17,10 @@ import { db } from '../../config/firebase';
 import { parseMatric, inferLevel } from '../../utils/matricParser';
 
 const ROLES = [
-  { key: 'student',   label: 'Student',    icon: 'school-outline' },
-  { key: 'courserep', label: 'Course Rep',  icon: 'people-outline' },
-  { key: 'lecturer',  label: 'Lecturer',   icon: 'ribbon-outline' },
+  { key: 'student',   label: 'Student',     icon: 'school-outline' },
+  { key: 'courserep', label: 'Course Rep',   icon: 'ribbon-outline' },
+  { key: 'lecturer',  label: 'Lecturer',    icon: 'briefcase-outline' },
+  { key: 'dean',      label: 'Dean',        icon: 'shield-outline' },
 ];
 
 export default function SignupScreen({ navigation }) {
@@ -35,6 +35,7 @@ export default function SignupScreen({ navigation }) {
   const [error, setError] = useState('');
 
   const isStudent = role === 'student' || role === 'courserep';
+  const isStaff = role === 'lecturer' || role === 'dean';
 
   async function handleSignup() {
     if (!displayName || !email || !password) {
@@ -45,8 +46,8 @@ export default function SignupScreen({ navigation }) {
       setError('Matric number is required for students and course reps.');
       return;
     }
-    if (role === 'lecturer' && !staffId) {
-      setError('Staff ID is required for lecturers.');
+    if (isStaff && !staffId) {
+      setError('Staff ID is required for lecturers and deans.');
       return;
     }
 
@@ -73,7 +74,7 @@ export default function SignupScreen({ navigation }) {
         department: parsed?.department ?? null,
         level: parsed ? inferLevel(parsed.year) : null,
         matricNumber: parsed?.raw ?? null,
-        staffId: role === 'lecturer' ? staffId.trim() : null,
+        staffId: isStaff ? staffId.trim() : null,
         idCardImageUrl: null,
         pushToken: null,
         createdAt: serverTimestamp(),
@@ -91,43 +92,55 @@ export default function SignupScreen({ navigation }) {
     <>
       <StatusBar style="dark" />
       <KeyboardAvoidingView
-        style={styles.outer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1 bg-white"
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerStyle={styles.container}
+          contentContainerClassName="px-6 pt-16 pb-10"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.logoMark}>
-              <Ionicons name="megaphone-outline" size={24} color="#1D4ED8" />
+          {/* Brand header */}
+          <View className="items-center mb-8">
+            <View className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 items-center justify-center mb-3">
+              <Ionicons name="megaphone" size={32} color="#111827" />
             </View>
-            <Text style={styles.appName}>Nottify</Text>
-            <Text style={styles.tagline}>University Notice Board</Text>
+            <Text className="text-2xl font-jakarta-extra text-gray-900 mb-1">Nottify</Text>
+            <Text className="text-sm font-jakarta text-gray-400">Create your account</Text>
           </View>
 
           {/* Form card */}
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Create your account</Text>
+          <View
+            className="bg-white rounded-2xl border border-gray-200 p-6"
+            style={{
+              shadowColor: '#111827',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 3,
+            }}
+          >
+            <Text className="text-sm font-jakarta-semi text-gray-700 mb-5">
+              Join your university board
+            </Text>
 
+            {/* Error banner */}
             {error ? (
-              <View style={styles.errorBanner}>
+              <View className="flex-row items-center gap-1.5 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 mb-4">
                 <Ionicons name="alert-circle-outline" size={14} color="#DC2626" />
-                <Text style={styles.errorText}>{error}</Text>
+                <Text className="text-xs font-jakarta text-red-600 flex-1">{error}</Text>
               </View>
             ) : null}
 
             {/* Full name */}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Full name</Text>
-              <View style={styles.inputRow}>
-                <Ionicons name="person-outline" size={16} color="#94A3B8" style={styles.inputIcon} />
+            <View className="mb-3.5">
+              <Text className="text-xs font-jakarta-semi text-gray-500 mb-1.5">Full name</Text>
+              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5">
+                <Ionicons name="person-outline" size={16} color="#9CA3AF" style={{ marginRight: 9 }} />
                 <TextInput
-                  style={styles.textInput}
+                  className="flex-1 text-sm text-gray-900 font-jakarta p-0"
                   placeholder="Your full name"
-                  placeholderTextColor="#CBD5E1"
+                  placeholderTextColor="#D1D5DB"
                   value={displayName}
                   onChangeText={setDisplayName}
                 />
@@ -135,14 +148,14 @@ export default function SignupScreen({ navigation }) {
             </View>
 
             {/* Email */}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Email address</Text>
-              <View style={styles.inputRow}>
-                <Ionicons name="mail-outline" size={16} color="#94A3B8" style={styles.inputIcon} />
+            <View className="mb-3.5">
+              <Text className="text-xs font-jakarta-semi text-gray-500 mb-1.5">Email address</Text>
+              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5">
+                <Ionicons name="mail-outline" size={16} color="#9CA3AF" style={{ marginRight: 9 }} />
                 <TextInput
-                  style={styles.textInput}
+                  className="flex-1 text-sm text-gray-900 font-jakarta p-0"
                   placeholder="you@university.edu.ng"
-                  placeholderTextColor="#CBD5E1"
+                  placeholderTextColor="#D1D5DB"
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={email}
@@ -152,65 +165,79 @@ export default function SignupScreen({ navigation }) {
             </View>
 
             {/* Password */}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>Password</Text>
-              <View style={styles.inputRow}>
-                <Ionicons name="lock-closed-outline" size={16} color="#94A3B8" style={styles.inputIcon} />
+            <View className="mb-3.5">
+              <Text className="text-xs font-jakarta-semi text-gray-500 mb-1.5">Password</Text>
+              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5">
+                <Ionicons name="lock-closed-outline" size={16} color="#9CA3AF" style={{ marginRight: 9 }} />
                 <TextInput
-                  style={styles.textInput}
+                  className="flex-1 text-sm text-gray-900 font-jakarta p-0"
                   placeholder="Min. 6 characters"
-                  placeholderTextColor="#CBD5E1"
+                  placeholderTextColor="#D1D5DB"
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(prev => !prev)}
-                  style={styles.eyeBtn}
+                  className="pl-2.5 py-0.5"
                 >
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={16}
-                    color="#94A3B8"
+                    color="#9CA3AF"
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Role selector */}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>I am a…</Text>
-              <View style={styles.roleRow}>
-                {ROLES.map((r) => (
-                  <TouchableOpacity
-                    key={r.key}
-                    style={[styles.roleChip, role === r.key && styles.roleChipActive]}
-                    onPress={() => setRole(r.key)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons
-                      name={r.icon}
-                      size={15}
-                      color={role === r.key ? '#fff' : '#64748B'}
-                    />
-                    <Text style={[styles.roleChipText, role === r.key && styles.roleChipTextActive]}>
-                      {r.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+            <View className="mb-3.5">
+              <Text className="text-xs font-jakarta-semi text-gray-500 mb-1.5">I am a…</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {ROLES.map((r) => {
+                  const active = role === r.key;
+                  return (
+                    <TouchableOpacity
+                      key={r.key}
+                      className={`flex-row items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl border ${
+                        active
+                          ? 'bg-gray-900 border-gray-900'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}
+                      style={{ minWidth: '46%', flexGrow: 1 }}
+                      onPress={() => setRole(r.key)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons
+                        name={r.icon}
+                        size={15}
+                        color={active ? '#fff' : '#6B7280'}
+                      />
+                      <Text
+                        className={`text-xs font-jakarta-semi ${
+                          active ? 'text-white' : 'text-gray-500'
+                        }`}
+                      >
+                        {r.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
             {/* Matric number — students & course reps */}
             {isStudent && (
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Matric number</Text>
-                <View style={styles.inputRow}>
-                  <Ionicons name="card-outline" size={16} color="#94A3B8" style={styles.inputIcon} />
+              <View className="mb-3.5">
+                <Text className="text-xs font-jakarta-semi text-gray-500 mb-1.5">
+                  Matric number
+                </Text>
+                <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5">
+                  <Ionicons name="card-outline" size={16} color="#9CA3AF" style={{ marginRight: 9 }} />
                   <TextInput
-                    style={styles.textInput}
+                    className="flex-1 text-sm text-gray-900 font-jakarta p-0"
                     placeholder="e.g. U23CS1019"
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor="#D1D5DB"
                     autoCapitalize="characters"
                     value={matricNumber}
                     onChangeText={setMatricNumber}
@@ -219,16 +246,16 @@ export default function SignupScreen({ navigation }) {
               </View>
             )}
 
-            {/* Staff ID — lecturers */}
-            {role === 'lecturer' && (
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>Staff ID</Text>
-                <View style={styles.inputRow}>
-                  <Ionicons name="id-card-outline" size={16} color="#94A3B8" style={styles.inputIcon} />
+            {/* Staff ID — lecturers & deans */}
+            {isStaff && (
+              <View className="mb-3.5">
+                <Text className="text-xs font-jakarta-semi text-gray-500 mb-1.5">Staff ID</Text>
+                <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5">
+                  <Ionicons name="id-card-outline" size={16} color="#9CA3AF" style={{ marginRight: 9 }} />
                   <TextInput
-                    style={styles.textInput}
+                    className="flex-1 text-sm text-gray-900 font-jakarta p-0"
                     placeholder="Your staff ID"
-                    placeholderTextColor="#CBD5E1"
+                    placeholderTextColor="#D1D5DB"
                     value={staffId}
                     onChangeText={setStaffId}
                   />
@@ -238,7 +265,7 @@ export default function SignupScreen({ navigation }) {
 
             {/* Submit button */}
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+              className={`bg-gray-900 rounded-xl py-4 items-center mt-1.5 ${loading ? 'opacity-50' : ''}`}
               onPress={handleSignup}
               disabled={loading}
               activeOpacity={0.85}
@@ -246,24 +273,27 @@ export default function SignupScreen({ navigation }) {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
+                <Text className="text-white text-sm font-jakarta-bold">Create Account</Text>
               )}
             </TouchableOpacity>
 
             {/* Divider */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
-              <View style={styles.dividerLine} />
+            <View className="flex-row items-center my-5 gap-2.5">
+              <View className="flex-1 h-px bg-gray-200" />
+              <Text className="text-xs font-jakarta text-gray-400">or</Text>
+              <View className="flex-1 h-px bg-gray-200" />
             </View>
 
             {/* Back to login */}
             <TouchableOpacity
-              style={styles.outlineButton}
+              className="rounded-xl py-3.5 items-center border border-gray-200 bg-gray-50"
               onPress={() => navigation.navigate('Login')}
               activeOpacity={0.85}
             >
-              <Text style={styles.outlineButtonText}>Already have an account? Sign in</Text>
+              <Text className="text-sm font-jakarta-semi text-gray-600">
+                Already have an account?{' '}
+                <Text className="text-gray-900 font-jakarta-bold">Sign in</Text>
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -286,197 +316,3 @@ function friendlyError(code) {
       return 'Something went wrong. Please try again.';
   }
 }
-
-const styles = StyleSheet.create({
-  outer: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-  },
-  container: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-  },
-
-  // Header / brand
-  header: {
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  logoMark: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  appName: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#0F172A',
-    letterSpacing: -0.3,
-    marginBottom: 3,
-  },
-  tagline: {
-    fontSize: 13,
-    color: '#64748B',
-    letterSpacing: 0.1,
-  },
-
-  // Card
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 24,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#334155',
-    marginBottom: 20,
-  },
-
-  // Error banner
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#DC2626',
-    fontSize: 12,
-    flex: 1,
-  },
-
-  // Fields
-  field: {
-    marginBottom: 14,
-  },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 6,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: 13,
-    paddingVertical: 13,
-  },
-  inputIcon: {
-    marginRight: 9,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#0F172A',
-    padding: 0,
-  },
-  eyeBtn: {
-    paddingLeft: 10,
-    paddingVertical: 2,
-  },
-
-  // Role chips
-  roleRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  roleChip: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
-  },
-  roleChipActive: {
-    backgroundColor: '#1D4ED8',
-    borderColor: '#1D4ED8',
-  },
-  roleChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  roleChipTextActive: {
-    color: '#fff',
-  },
-
-  // Primary button
-  button: {
-    backgroundColor: '#1D4ED8',
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
-    letterSpacing: 0.1,
-  },
-
-  // Divider
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 18,
-    gap: 10,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E2E8F0',
-  },
-  dividerText: {
-    fontSize: 12,
-    color: '#94A3B8',
-  },
-
-  // Outline button
-  outlineButton: {
-    borderRadius: 10,
-    paddingVertical: 13,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    backgroundColor: '#EFF6FF',
-  },
-  outlineButtonText: {
-    color: '#1D4ED8',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-});

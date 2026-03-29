@@ -1,51 +1,33 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import { logOut } from '../services/authService';
 
 export default function PendingScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.icon}>⏳</Text>
-      <Text style={styles.title}>Account Pending</Text>
-      <Text style={styles.body}>
+    <View className="flex-1 bg-white items-center justify-center px-8">
+      <StatusBar style="dark" />
+
+      <View className="w-20 h-20 rounded-full bg-gray-50 border border-gray-100 items-center justify-center mb-6">
+        <Ionicons name="time-outline" size={40} color="#6B7280" />
+      </View>
+
+      <Text className="text-xl text-gray-900 font-jakarta-extra mb-2 text-center">
+        Account Pending
+      </Text>
+      <Text className="text-sm text-gray-400 font-jakarta text-center leading-6 mb-8">
         Your account is under review. You'll be notified once it's approved.
         Make sure you've uploaded your student ID card.
       </Text>
-      <TouchableOpacity style={styles.button} onPress={logOut}>
-        <Text style={styles.buttonText}>Sign Out</Text>
+
+      <TouchableOpacity
+        className="border border-gray-200 rounded-xl py-3.5 px-8"
+        onPress={logOut}
+        activeOpacity={0.85}
+      >
+        <Text className="text-sm text-gray-600 font-jakarta-semi">Sign Out</Text>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  icon: { fontSize: 52, marginBottom: 16 },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 10,
-  },
-  body: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
-  },
-  button: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 10,
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-  },
-  buttonText: { color: '#374151', fontWeight: '600' },
-});

@@ -48,7 +48,7 @@ function AuthNavigator() {
 // ─── Student Stack ───────────────────────────────────────────────────────────
 function StudentNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen
         name="StudentHome"
         component={StudentHomeScreen}
@@ -66,7 +66,7 @@ function StudentNavigator() {
 // ─── Lecturer Stack ──────────────────────────────────────────────────────────
 function LecturerNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen
         name="LecturerHome"
         component={LecturerHomeScreen}
@@ -79,7 +79,7 @@ function LecturerNavigator() {
 // ─── Course Rep Stack ────────────────────────────────────────────────────────
 function RepNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen
         name="RepHome"
         component={RepHomeScreen}
@@ -102,7 +102,7 @@ function RepNavigator() {
 // ─── Dean Stack ──────────────────────────────────────────────────────────────
 function DeanNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{headerShown: false}}>
       <Stack.Screen
         name="DeanHome"
         component={DeanHomeScreen}

@@ -1,13 +1,9 @@
 import React, { useState, useRef } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  Image,
+  View, Text, TouchableOpacity, ActivityIndicator, Alert, Image, ScrollView,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
 import { createWorker } from 'tesseract.js';
@@ -28,18 +24,30 @@ export default function IDVerificationScreen({ navigation }) {
   // ── Permission gate ──────────────────────────────────────────────────────
   if (!permission) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator color="#2563EB" />
+      <View className="flex-1 bg-white items-center justify-center">
+        <StatusBar style="dark" />
+        <ActivityIndicator color="#111827" />
       </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.permText}>Camera access is required to verify your ID.</Text>
-        <TouchableOpacity style={styles.button} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant Camera Access</Text>
+      <View className="flex-1 bg-white items-center justify-center px-6">
+        <StatusBar style="dark" />
+        <View className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 items-center justify-center mb-5">
+          <Ionicons name="camera-outline" size={28} color="#9CA3AF" />
+        </View>
+        <Text className="text-base text-gray-900 font-jakarta-bold mb-2 text-center">Camera Required</Text>
+        <Text className="text-sm text-gray-400 font-jakarta text-center leading-6 mb-8">
+          Camera access is required to verify your student ID card.
+        </Text>
+        <TouchableOpacity
+          className="bg-gray-900 rounded-xl py-3.5 px-6 items-center"
+          onPress={requestPermission}
+          activeOpacity={0.85}
+        >
+          <Text className="text-white text-sm font-jakarta-bold">Grant Camera Access</Text>
         </TouchableOpacity>
       </View>
     );
@@ -68,8 +76,6 @@ export default function IDVerificationScreen({ navigation }) {
     let worker;
     try {
       worker = await createWorker('eng');
-
-      // Read the image as base64 for Tesseract
       const base64 = await FileSystem.readAsStringAsync(photoUri, {
         encoding: FileSystem.EncodingType.Base64,
       });
@@ -91,7 +97,6 @@ export default function IDVerificationScreen({ navigation }) {
         setStatus('done');
         setStatusMessage('Identity verified!');
         await refreshUser();
-        // Short delay so user sees success state before navigating away
         setTimeout(() => navigation.replace('Login'), 1500);
       } else {
         setStatus('failed');
@@ -114,187 +119,103 @@ export default function IDVerificationScreen({ navigation }) {
     const uid = auth.currentUser?.uid;
     if (!uid) return;
     await updateDoc(doc(db, 'users', uid), {
-      idCardImageUrl: imageUri, // ideally upload to Storage first
-      // status remains 'pending' — admin still needs to approve
-      // but flag that OCR verification passed
+      idCardImageUrl: imageUri,
       idVerified: true,
     });
   }
 
-  // ── Retry ────────────────────────────────────────────────────────────────
   function retry() {
     setPhotoUri(null);
     setStatus('idle');
     setStatusMessage('');
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Photo review state ───────────────────────────────────────────────────
   if (photoUri && status !== 'capturing') {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Review & Verify</Text>
-        <Image source={{ uri: photoUri }} style={styles.preview} resizeMode="contain" />
+      <ScrollView className="flex-1 bg-white" contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 40 }}>
+        <StatusBar style="dark" />
+        <Text className="text-2xl text-gray-900 font-jakarta-extra mb-6">Review & Verify</Text>
+
+        <Image
+          source={{ uri: photoUri }}
+          style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 12, marginBottom: 20, backgroundColor: '#000' }}
+          resizeMode="contain"
+        />
 
         {status === 'processing' && (
-          <View style={styles.processingBox}>
-            <ActivityIndicator color="#2563EB" style={{ marginBottom: 8 }} />
-            <Text style={styles.statusText}>{statusMessage}</Text>
+          <View className="items-center mb-5">
+            <ActivityIndicator color="#111827" style={{ marginBottom: 8 }} />
+            <Text className="text-sm text-gray-500 font-jakarta text-center">{statusMessage}</Text>
           </View>
         )}
 
         {status === 'done' && (
-          <View style={[styles.resultBox, styles.successBox]}>
-            <Text style={styles.resultIcon}>✓</Text>
-            <Text style={styles.resultText}>{statusMessage}</Text>
+          <View className="flex-row items-start gap-3 bg-green-50 rounded-xl p-4 mb-4">
+            <Ionicons name="checkmark-circle-outline" size={20} color="#16A34A" style={{ marginTop: 1 }} />
+            <Text className="flex-1 text-sm text-gray-700 font-jakarta leading-5">{statusMessage}</Text>
           </View>
         )}
 
         {status === 'failed' && (
-          <View style={[styles.resultBox, styles.failBox]}>
-            <Text style={styles.resultIcon}>✗</Text>
-            <Text style={styles.resultText}>{statusMessage}</Text>
+          <View className="flex-row items-start gap-3 bg-red-50 rounded-xl p-4 mb-4">
+            <Ionicons name="close-circle-outline" size={20} color="#DC2626" style={{ marginTop: 1 }} />
+            <Text className="flex-1 text-sm text-gray-700 font-jakarta leading-5">{statusMessage}</Text>
           </View>
         )}
 
         {status === 'idle' && (
-          <TouchableOpacity style={styles.button} onPress={verifyID}>
-            <Text style={styles.buttonText}>Verify This Photo</Text>
+          <TouchableOpacity
+            className="bg-gray-900 rounded-xl py-4 items-center mb-3"
+            onPress={verifyID}
+            activeOpacity={0.85}
+          >
+            <Text className="text-white text-sm font-jakarta-bold">Verify This Photo</Text>
           </TouchableOpacity>
         )}
 
         {(status === 'failed' || status === 'idle') && (
-          <TouchableOpacity style={styles.secondaryButton} onPress={retry}>
-            <Text style={styles.secondaryButtonText}>Retake Photo</Text>
+          <TouchableOpacity className="items-center py-3" onPress={retry}>
+            <Text className="text-sm text-gray-500 font-jakarta-semi">Retake Photo</Text>
           </TouchableOpacity>
         )}
-      </View>
+      </ScrollView>
     );
   }
 
+  // ── Camera view ──────────────────────────────────────────────────────────
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Verify Your ID</Text>
-      <Text style={styles.subtitle}>
+    <View className="flex-1 bg-white px-6 pt-16 pb-8">
+      <StatusBar style="dark" />
+      <Text className="text-2xl text-gray-900 font-jakarta-extra mb-2">Verify Your ID</Text>
+      <Text className="text-sm text-gray-400 font-jakarta leading-6 mb-5">
         Take a clear photo of your student ID card so we can confirm your matric number.
       </Text>
 
-      <CameraView ref={cameraRef} style={styles.camera} facing="back">
-        <View style={styles.cameraOverlay}>
-          <View style={styles.idFrame} />
+      <CameraView
+        ref={cameraRef}
+        facing="back"
+        style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}
+      >
+        <View className="flex-1 items-center justify-center">
+          <View style={{ width: '85%', aspectRatio: 1.586, borderWidth: 2, borderColor: 'rgba(255,255,255,0.7)', borderRadius: 8, borderStyle: 'dashed' }} />
         </View>
       </CameraView>
 
       <TouchableOpacity
-        style={[styles.button, status === 'capturing' && styles.buttonDisabled]}
+        className={`bg-gray-900 rounded-xl py-4 items-center mb-3 ${status === 'capturing' ? 'opacity-50' : ''}`}
         onPress={takePhoto}
         disabled={status === 'capturing'}
+        activeOpacity={0.85}
       >
         {status === 'capturing'
           ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.buttonText}>Take Photo</Text>}
+          : <Text className="text-white text-sm font-jakarta-bold">Take Photo</Text>}
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.secondaryButton}
-        onPress={() => navigation.navigate('Login')}
-      >
-        <Text style={styles.secondaryButtonText}>Skip for now</Text>
+      <TouchableOpacity className="items-center py-3" onPress={() => navigation.navigate('Login')}>
+        <Text className="text-sm text-gray-400 font-jakarta-semi">Skip for now</Text>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: 24,
-    paddingTop: 60,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 20,
-    lineHeight: 22,
-  },
-  permText: {
-    fontSize: 15,
-    color: '#374151',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  camera: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  cameraOverlay: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  idFrame: {
-    width: '85%',
-    aspectRatio: 1.586, // standard ID card ratio
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 8,
-    borderStyle: 'dashed',
-  },
-  preview: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    borderRadius: 12,
-    marginBottom: 20,
-    backgroundColor: '#000',
-  },
-  processingBox: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  statusText: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  resultBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 14,
-    borderRadius: 10,
-    marginBottom: 16,
-    gap: 10,
-  },
-  successBox: { backgroundColor: '#ECFDF5' },
-  failBox: { backgroundColor: '#FEF2F2' },
-  resultIcon: { fontSize: 18, marginTop: 1 },
-  resultText: { flex: 1, fontSize: 13, color: '#374151', lineHeight: 20 },
-  button: {
-    backgroundColor: '#2563EB',
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  secondaryButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  secondaryButtonText: { color: '#6B7280', fontSize: 14 },
-});
