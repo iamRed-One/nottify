@@ -21,9 +21,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.iamred_one.Nottify",
-      "googleServicesFile": "./google-services.json",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.iamred_one.Nottify"
     },
     "web": {
       "favicon": "./assets/favicon.png"
