@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, FlatList, ActivityIndicator,
   TouchableOpacity, Modal, KeyboardAvoidingView, ScrollView,
-  TextInput, Alert,
+  TextInput, Alert, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -11,12 +11,15 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { postNotice } from '../../services/roomService';
 import NoticeCard from '../../components/NoticeCard';
 
 export default function RoomFeedScreen({ route }) {
   const { roomId } = route.params ?? {};
   const { user } = useAuth();
+  const { theme: t, isDark } = useTheme();
+
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [memberRole, setMemberRole] = useState(null);
@@ -67,91 +70,218 @@ export default function RoomFeedScreen({ route }) {
     }
   }
 
+  // ─── Not a member ────────────────────────────────────────────────────────────
   if (notMember) {
     return (
-      <View className="flex-1 bg-gray-50 items-center justify-center px-8">
-        <StatusBar style="dark" />
-        <Ionicons name="lock-closed-outline" size={36} color="#D1D5DB" />
-        <Text className="text-base text-gray-700 font-jakarta-bold mt-4 text-center">
+      <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+        <StatusBar style={t.statusBar} />
+        <Ionicons name="lock-closed-outline" size={36} color={t.textMuted} />
+        <Text style={{ marginTop: 16, fontSize: 15, fontWeight: '700', color: t.textSub, textAlign: 'center', letterSpacing: 0.1 }}>
           Not a member of this room
         </Text>
       </View>
     );
   }
 
+  // ─── FAB shadow (light mode only) ────────────────────────────────────────────
+  const fabShadow = !isDark
+    ? {
+        shadowColor: '#000000',
+        shadowOpacity: 0.22,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 8,
+      }
+    : {};
+
+  // ─── Main render ─────────────────────────────────────────────────────────────
   return (
-    <View className="flex-1 bg-gray-50">
-      <StatusBar style="dark" />
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <StatusBar style={t.statusBar} />
 
       {loading ? (
-        <ActivityIndicator color="#111827" style={{ marginTop: 60 }} />
+        <ActivityIndicator color={t.text} style={{ marginTop: 80 }} />
       ) : (
         <FlatList
           data={notices}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <NoticeCard notice={item} showMeta />}
           contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View className="items-center mt-20">
-              <Text className="text-4xl mb-3">📋</Text>
-              <Text className="text-sm text-gray-400 font-jakarta text-center">
-                No notices yet.
+            <View style={{ alignItems: 'center', marginTop: 80 }}>
+              <Ionicons name="document-text-outline" size={40} color={t.textMuted} />
+              <Text style={{ marginTop: 14, fontSize: 14, color: t.textSub, textAlign: 'center', letterSpacing: 0.1 }}>
+                No notices yet
               </Text>
             </View>
           }
         />
       )}
 
+      {/* ─── FAB ─────────────────────────────────────────────────────────────── */}
       {canPost && (
         <TouchableOpacity
-          className="absolute bottom-7 right-5 bg-gray-900 rounded-3xl px-5 py-3.5 flex-row items-center gap-2"
-          style={{ elevation: 6, shadowColor: '#111827', shadowOpacity: 0.25, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } }}
           onPress={() => { setTitle(''); setBody(''); setModalVisible(true); }}
-          activeOpacity={0.85}
+          activeOpacity={0.82}
+          style={[
+            {
+              position: 'absolute',
+              bottom: 28,
+              right: 20,
+              backgroundColor: t.btnPrimaryBg,
+              borderRadius: 28,
+              paddingHorizontal: 20,
+              paddingVertical: 14,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+            },
+            fabShadow,
+          ]}
         >
-          <Ionicons name="add" size={18} color="#fff" />
-          <Text className="text-white text-sm font-jakarta-bold">Notice</Text>
+          <Ionicons name="add" size={18} color={t.btnPrimaryText} />
+          <Text style={{ color: t.btnPrimaryText, fontSize: 14, fontWeight: '700', letterSpacing: 0.2 }}>
+            Notice
+          </Text>
         </TouchableOpacity>
       )}
 
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
+      {/* ─── Post Notice Modal (bottom sheet) ────────────────────────────────── */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisible(false)}
+      >
         <KeyboardAvoidingView
-          className="flex-1 justify-end"
-          style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-          behavior="padding"
+          style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: t.overlay }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <ScrollView keyboardShouldPersistTaps="handled" scrollEnabled={false} contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}>
-          <View className="bg-white rounded-t-3xl px-6 pt-4 pb-10">
-            <View className="w-10 h-1 bg-gray-200 rounded-full self-center mb-5" />
-            <Text className="text-lg text-gray-900 font-jakarta-extra mb-4">Post Notice</Text>
-            <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-900 font-jakarta mb-3"
-              placeholder="Title" placeholderTextColor="#CBD5E1"
-              value={title} onChangeText={setTitle}
-            />
-            <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-900 font-jakarta mb-4"
-              placeholder="Message…" placeholderTextColor="#CBD5E1"
-              multiline numberOfLines={4} textAlignVertical="top"
-              style={{ height: 110 }} value={body} onChangeText={setBody}
-            />
-            <View className="flex-row gap-3">
-              <TouchableOpacity
-                className="flex-1 border border-gray-200 rounded-xl py-3.5 items-center"
-                onPress={() => setModalVisible(false)}
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            scrollEnabled={false}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
+          >
+            <View
+              style={{
+                backgroundColor: t.sidebarBg,
+                borderTopLeftRadius: 28,
+                borderTopRightRadius: 28,
+                paddingHorizontal: 24,
+                paddingTop: 16,
+                paddingBottom: 40,
+              }}
+            >
+              {/* Drag handle */}
+              <View
+                style={{
+                  width: 40,
+                  height: 4,
+                  backgroundColor: t.border,
+                  borderRadius: 100,
+                  alignSelf: 'center',
+                  marginBottom: 22,
+                }}
+              />
+
+              {/* Title */}
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontWeight: '800',
+                  color: t.text,
+                  marginBottom: 18,
+                  letterSpacing: 0.1,
+                }}
               >
-                <Text className="text-sm text-gray-600 font-jakarta-semi">Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-[2] bg-gray-900 rounded-xl py-3.5 items-center ${posting ? 'opacity-50' : ''}`}
-                onPress={handlePost} disabled={posting}
-              >
-                {posting
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text className="text-white text-sm font-jakarta-bold">Post</Text>}
-              </TouchableOpacity>
+                Post Notice
+              </Text>
+
+              {/* Title input */}
+              <TextInput
+                style={{
+                  backgroundColor: t.inputBg,
+                  borderWidth: 1,
+                  borderColor: t.inputBorder,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  fontSize: 14,
+                  color: t.inputText,
+                  marginBottom: 12,
+                }}
+                placeholder="Title"
+                placeholderTextColor={t.placeholder}
+                value={title}
+                onChangeText={setTitle}
+              />
+
+              {/* Body input */}
+              <TextInput
+                style={{
+                  backgroundColor: t.inputBg,
+                  borderWidth: 1,
+                  borderColor: t.inputBorder,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  fontSize: 14,
+                  color: t.inputText,
+                  height: 110,
+                  marginBottom: 20,
+                  textAlignVertical: 'top',
+                }}
+                placeholder="Message…"
+                placeholderTextColor={t.placeholder}
+                multiline
+                numberOfLines={4}
+                value={body}
+                onChangeText={setBody}
+              />
+
+              {/* Action row */}
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {/* Cancel */}
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  activeOpacity={0.8}
+                  style={{
+                    flex: 1,
+                    backgroundColor: t.btnSecondaryBg,
+                    borderWidth: 1,
+                    borderColor: t.btnSecondaryBorder,
+                    borderRadius: 12,
+                    paddingVertical: 14,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: t.btnSecondaryText, letterSpacing: 0.1 }}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Post */}
+                <TouchableOpacity
+                  onPress={handlePost}
+                  disabled={posting}
+                  activeOpacity={0.82}
+                  style={{
+                    flex: 2,
+                    backgroundColor: t.btnPrimaryBg,
+                    borderRadius: 12,
+                    paddingVertical: 14,
+                    alignItems: 'center',
+                    opacity: posting ? 0.5 : 1,
+                  }}
+                >
+                  {posting
+                    ? <ActivityIndicator color={t.btnPrimaryText} size="small" />
+                    : <Text style={{ fontSize: 14, fontWeight: '700', color: t.btnPrimaryText, letterSpacing: 0.2 }}>Post</Text>
+                  }
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </Modal>

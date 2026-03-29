@@ -1,19 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  ScrollView,
-  Platform,
+  View, Text, TextInput, TouchableOpacity,
+  ActivityIndicator, KeyboardAvoidingView, ScrollView, Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { signIn } from '../../services/authService';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function LoginScreen({ navigation }) {
+  const { theme: t, isDark, toggleTheme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,15 +17,11 @@ export default function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin() {
-    if (!email || !password) {
-      setError('Please enter your email and password.');
-      return;
-    }
+    if (!email || !password) { setError('Please enter your email and password.'); return; }
     setError('');
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      // AuthContext listener will update user state — navigation handled in App.js
     } catch (err) {
       setError(friendlyError(err.code));
     } finally {
@@ -39,59 +31,85 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style={t.statusBar} />
       <KeyboardAvoidingView
-        className="flex-1 bg-white"
+        style={{ flex: 1, backgroundColor: t.bg }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerClassName="px-6 pt-20 pb-10 justify-center"
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 72, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Brand header */}
-          <View className="items-center mb-8">
-            <View className="w-16 h-16 rounded-2xl bg-gray-50 border border-gray-100 items-center justify-center mb-3">
-              <Ionicons name="megaphone" size={32} color="#111827" />
+          {/* Theme toggle */}
+          <TouchableOpacity
+            onPress={toggleTheme}
+            style={{
+              position: 'absolute', top: 20, right: 24,
+              width: 36, height: 36, borderRadius: 10,
+              backgroundColor: t.bgElevated, borderWidth: 1, borderColor: t.border,
+              alignItems: 'center', justifyContent: 'center',
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={16} color={t.textSub} />
+          </TouchableOpacity>
+
+          {/* Brand */}
+          <View style={{ alignItems: 'center', marginBottom: 40 }}>
+            <View style={{
+              width: 64, height: 64, borderRadius: 20,
+              backgroundColor: t.bgElevated, borderWidth: 1, borderColor: t.border,
+              alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+            }}>
+              <Ionicons name="megaphone" size={28} color={t.text} />
             </View>
-            <Text className="text-2xl font-jakarta-extra text-gray-900 mb-1">Nottify</Text>
-            <Text className="text-sm font-jakarta text-gray-400">Welcome back</Text>
+            <Text style={{ fontSize: 26, fontFamily: 'PlusJakartaSans_800ExtraBold', color: t.text, marginBottom: 4 }}>
+              Nottify
+            </Text>
+            <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans_400Regular', color: t.textSub }}>
+              Welcome back
+            </Text>
           </View>
 
-          {/* Form card */}
-          <View
-            className="bg-white rounded-2xl border border-gray-200 p-6"
-            style={{
-              shadowColor: '#111827',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 3,
-            }}
-          >
-            <Text className="text-sm font-jakarta-semi text-gray-700 mb-5">
+          {/* Card */}
+          <View style={{
+            backgroundColor: t.bgCard, borderRadius: 20,
+            borderWidth: 1, borderColor: t.border, padding: 24,
+          }}>
+            <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', color: t.textSub, marginBottom: 20 }}>
               Sign in to your account
             </Text>
 
-            {/* Error banner */}
+            {/* Error */}
             {error ? (
-              <View className="flex-row items-center gap-1.5 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5 mb-4">
-                <Ionicons name="alert-circle-outline" size={14} color="#DC2626" />
-                <Text className="text-xs font-jakarta text-red-600 flex-1">{error}</Text>
+              <View style={{
+                flexDirection: 'row', alignItems: 'center', gap: 8,
+                backgroundColor: t.dangerBg, borderRadius: 12,
+                paddingHorizontal: 12, paddingVertical: 10, marginBottom: 16,
+              }}>
+                <Ionicons name="alert-circle-outline" size={14} color={t.dangerText} />
+                <Text style={{ flex: 1, fontSize: 12, fontFamily: 'PlusJakartaSans_400Regular', color: t.dangerText }}>
+                  {error}
+                </Text>
               </View>
             ) : null}
 
-            {/* Email field */}
-            <View className="mb-3.5">
-              <Text className="text-xs font-jakarta-semi text-gray-500 mb-1.5">
+            {/* Email */}
+            <View style={{ marginBottom: 14 }}>
+              <Text style={{ fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', color: t.textSub, marginBottom: 6 }}>
                 Email address
               </Text>
-              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5">
-                <Ionicons name="mail-outline" size={16} color="#9CA3AF" style={{ marginRight: 9 }} />
+              <View style={{
+                flexDirection: 'row', alignItems: 'center',
+                backgroundColor: t.inputBg, borderWidth: 1, borderColor: t.inputBorder,
+                borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
+              }}>
+                <Ionicons name="mail-outline" size={15} color={t.textMuted} style={{ marginRight: 10 }} />
                 <TextInput
-                  className="flex-1 text-sm text-gray-900 font-jakarta p-0"
+                  style={{ flex: 1, fontSize: 14, color: t.inputText, fontFamily: 'PlusJakartaSans_400Regular', padding: 0 }}
                   placeholder="you@university.edu.ng"
-                  placeholderTextColor="#D1D5DB"
+                  placeholderTextColor={t.placeholder}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={email}
@@ -100,64 +118,66 @@ export default function LoginScreen({ navigation }) {
               </View>
             </View>
 
-            {/* Password field */}
-            <View className="mb-3.5">
-              <Text className="text-xs font-jakarta-semi text-gray-500 mb-1.5">
+            {/* Password */}
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ fontSize: 11, fontFamily: 'PlusJakartaSans_600SemiBold', color: t.textSub, marginBottom: 6 }}>
                 Password
               </Text>
-              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5">
-                <Ionicons name="lock-closed-outline" size={16} color="#9CA3AF" style={{ marginRight: 9 }} />
+              <View style={{
+                flexDirection: 'row', alignItems: 'center',
+                backgroundColor: t.inputBg, borderWidth: 1, borderColor: t.inputBorder,
+                borderRadius: 12, paddingHorizontal: 14, paddingVertical: 13,
+              }}>
+                <Ionicons name="lock-closed-outline" size={15} color={t.textMuted} style={{ marginRight: 10 }} />
                 <TextInput
-                  className="flex-1 text-sm text-gray-900 font-jakarta p-0"
+                  style={{ flex: 1, fontSize: 14, color: t.inputText, fontFamily: 'PlusJakartaSans_400Regular', padding: 0 }}
                   placeholder="Enter your password"
-                  placeholderTextColor="#D1D5DB"
+                  placeholderTextColor={t.placeholder}
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
                 />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(prev => !prev)}
-                  className="pl-2.5 py-0.5"
-                >
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={16}
-                    color="#9CA3AF"
-                  />
+                <TouchableOpacity onPress={() => setShowPassword(p => !p)} style={{ paddingLeft: 10 }}>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={15} color={t.textMuted} />
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Sign in button */}
+            {/* Sign in */}
             <TouchableOpacity
-              className={`bg-gray-900 rounded-xl py-4 items-center mt-1.5 ${loading ? 'opacity-50' : ''}`}
               onPress={handleLogin}
               disabled={loading}
               activeOpacity={0.85}
+              style={{
+                backgroundColor: t.btnPrimaryBg, borderRadius: 12,
+                paddingVertical: 15, alignItems: 'center',
+                opacity: loading ? 0.5 : 1,
+              }}
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text className="text-white text-sm font-jakarta-bold">Sign In</Text>
-              )}
+              {loading
+                ? <ActivityIndicator color={t.btnPrimaryText} />
+                : <Text style={{ fontSize: 14, fontFamily: 'PlusJakartaSans_700Bold', color: t.btnPrimaryText }}>Sign In</Text>}
             </TouchableOpacity>
 
             {/* Divider */}
-            <View className="flex-row items-center my-5 gap-2.5">
-              <View className="flex-1 h-px bg-gray-200" />
-              <Text className="text-xs font-jakarta text-gray-400">or</Text>
-              <View className="flex-1 h-px bg-gray-200" />
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 20, gap: 10 }}>
+              <View style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+              <Text style={{ fontSize: 11, fontFamily: 'PlusJakartaSans_400Regular', color: t.textMuted }}>or</Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: t.border }} />
             </View>
 
             {/* Sign up link */}
             <TouchableOpacity
-              className="rounded-xl py-3.5 items-center border border-gray-200 bg-gray-50"
               onPress={() => navigation.navigate('Signup')}
               activeOpacity={0.85}
+              style={{
+                borderRadius: 12, paddingVertical: 14, alignItems: 'center',
+                backgroundColor: t.btnSecondaryBg, borderWidth: 1, borderColor: t.btnSecondaryBorder,
+              }}
             >
-              <Text className="text-sm font-jakarta-semi text-gray-600">
-                Don't have an account?{' '}
-                <Text className="text-gray-900 font-jakarta-bold">Sign up</Text>
+              <Text style={{ fontSize: 13, fontFamily: 'PlusJakartaSans_600SemiBold', color: t.btnSecondaryText }}>
+                Don't have an account?{'  '}
+                <Text style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Sign up</Text>
               </Text>
             </TouchableOpacity>
           </View>

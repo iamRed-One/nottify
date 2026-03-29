@@ -177,6 +177,29 @@ export async function findRoom(dept, level, year, semester) {
 }
 
 /**
+ * Approves a pending student: sets status → active, adds to room members.
+ * @param {string} roomId
+ * @param {string} userId
+ */
+export async function approveStudent(roomId, userId) {
+  await updateDoc(doc(db, 'users', userId), { status: 'active' });
+  await setDoc(doc(db, 'rooms', roomId, 'members', userId), {
+    userId,
+    role: 'student',
+    addedAt: serverTimestamp(),
+    addedBy: auth.currentUser?.uid ?? null,
+  });
+}
+
+/**
+ * Rejects a pending student: sets status → rejected.
+ * @param {string} userId
+ */
+export async function rejectStudent(userId) {
+  await updateDoc(doc(db, 'users', userId), { status: 'rejected' });
+}
+
+/**
  * Returns all rooms the current user is a member of.
  * @param {string} userId
  */

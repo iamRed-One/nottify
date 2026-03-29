@@ -8,14 +8,16 @@ import { StatusBar } from 'expo-status-bar';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { sendBroadcastPush } from '../../services/notificationService';
+import { AUDIENCE } from '../../theme';
 
-const AUDIENCE_LABELS = { all_students: 'All Students', staff_only: 'Staff Only', all: 'Everyone' };
-const AUDIENCE_COLORS = { all_students: '#DBEAFE', staff_only: '#F3E8FF', all: '#FEF9C3' };
-const AUDIENCE_TEXT_COLORS = { all_students: '#1D4ED8', staff_only: '#7E22CE', all: '#854D0E' };
+const DEAN_COLOR = '#06B6D4';
 
 export default function DeanHomeScreen() {
   const { user, signOut } = useAuth();
+  const { theme: t, isDark, toggleTheme } = useTheme();
+
   const [broadcasts, setBroadcasts] = useState([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -56,72 +58,183 @@ export default function DeanHomeScreen() {
     : 'D';
 
   function renderBroadcast({ item }) {
-    const bgColor = AUDIENCE_COLORS[item.audience] ?? '#F3F4F6';
-    const textColor = AUDIENCE_TEXT_COLORS[item.audience] ?? '#374151';
-    const label = AUDIENCE_LABELS[item.audience] ?? item.audience;
+    const aud = AUDIENCE[item.audience] ?? { color: '#888888', label: item.audience };
     return (
       <View
-        className="bg-white border border-gray-100 rounded-2xl p-4 mb-3"
-        style={{ shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 1 }}
+        style={{
+          flexDirection: 'row',
+          backgroundColor: t.bgCard,
+          borderWidth: 1,
+          borderColor: t.border,
+          borderRadius: 16,
+          overflow: 'hidden',
+          marginBottom: 12,
+        }}
       >
-        <View className="flex-row items-start justify-between mb-2 gap-2">
-          <Text className="flex-1 text-sm text-gray-900 font-jakarta-bold">{item.title}</Text>
-          <View className="rounded-full px-2.5 py-0.5" style={{ backgroundColor: bgColor }}>
-            <Text className="text-xs font-jakarta-semi" style={{ color: textColor }}>{label}</Text>
+        {/* Left accent bar */}
+        <View style={{ width: 3, backgroundColor: aud.color }} />
+
+        {/* Content */}
+        <View style={{ flex: 1, padding: 14 }}>
+          {/* Title row */}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6, gap: 8 }}>
+            <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: t.text, lineHeight: 20 }}>
+              {item.title}
+            </Text>
           </View>
-        </View>
-        <Text className="text-sm text-gray-500 font-jakarta leading-5">{item.body}</Text>
-        <View className="flex-row justify-between mt-3 pt-3 border-t border-gray-50">
-          <Text className="text-xs text-gray-400 font-jakarta-semi">{item.postedByName || 'Dean'}</Text>
-          <Text className="text-xs text-gray-300 font-jakarta">{formatTime(item.createdAt)}</Text>
+
+          {/* Body */}
+          <Text style={{ fontSize: 13, color: t.textSub, lineHeight: 19 }}>{item.body}</Text>
+
+          {/* Meta row */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 6 }}>
+            {/* Colored dot + audience label */}
+            <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: aud.color }} />
+            <Text style={{ fontSize: 11, color: t.textSub, fontWeight: '500' }}>{aud.label}</Text>
+            <Text style={{ fontSize: 11, color: t.textMuted, marginLeft: 2 }}>·</Text>
+            <Text style={{ fontSize: 11, color: t.textSub, flex: 1 }}>{item.postedByName || 'Dean'}</Text>
+            <Text style={{ fontSize: 11, color: t.textMuted }}>{formatTime(item.createdAt)}</Text>
+          </View>
         </View>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <StatusBar style="dark" />
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <StatusBar style={t.statusBar} />
 
-      {/* Header */}
-      <View className="bg-white border-b border-gray-100 px-5 pt-14 pb-4 flex-row items-start justify-between">
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <View
+        style={{
+          backgroundColor: t.bg,
+          borderBottomWidth: 1,
+          borderBottomColor: t.border,
+          paddingHorizontal: 20,
+          paddingTop: 56,
+          paddingBottom: 16,
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+        }}
+      >
         <View>
-          <Text className="text-xl text-gray-900 font-jakarta-extra">Dean Dashboard</Text>
-          <Text className="text-sm text-gray-400 font-jakarta mt-0.5">
+          <Text style={{ fontSize: 22, fontWeight: '800', color: t.text, letterSpacing: -0.5 }}>
+            Dean Dashboard
+          </Text>
+          <Text style={{ fontSize: 13, color: t.textSub, marginTop: 2 }}>
             {user?.displayName ? `Welcome, ${user.displayName}` : 'Faculty of Sciences'}
           </Text>
         </View>
-        <TouchableOpacity className="p-1 mt-1" onPress={() => setSidebarVisible(true)} activeOpacity={0.7}>
-          <Ionicons name="menu-outline" size={24} color="#111827" />
+
+        {/* Avatar */}
+        <TouchableOpacity
+          onPress={() => setSidebarVisible(true)}
+          activeOpacity={0.75}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: `${DEAN_COLOR}50`,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: 2,
+          }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '700', color: DEAN_COLOR }}>
+            {initials}
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Action Buttons */}
-      <View className="flex-row gap-3 px-5 pt-4 pb-2">
+      {/* ── Action Cards ───────────────────────────────────────── */}
+      <View style={{ flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 }}>
+        {/* All Students — primary */}
         <TouchableOpacity
-          className="flex-1 bg-gray-900 rounded-xl py-3.5 items-center flex-row justify-center gap-2"
           onPress={() => openCompose('all_students')}
-          activeOpacity={0.85}
+          activeOpacity={0.82}
+          style={{
+            flex: 1,
+            backgroundColor: t.btnPrimaryBg,
+            borderRadius: 16,
+            padding: 14,
+          }}
         >
-          <Ionicons name="megaphone-outline" size={15} color="#fff" />
-          <Text className="text-white text-xs font-jakarta-bold">All Students</Text>
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              backgroundColor: `${t.btnPrimaryText}18`,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 10,
+            }}
+          >
+            <Ionicons name="megaphone-outline" size={20} color={t.btnPrimaryText} />
+          </View>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: t.btnPrimaryText }}>
+            All Students
+          </Text>
+          <Text style={{ fontSize: 11, color: `${t.btnPrimaryText}80`, marginTop: 2 }}>
+            Broadcast to students
+          </Text>
         </TouchableOpacity>
+
+        {/* Staff Only — secondary */}
         <TouchableOpacity
-          className="flex-1 border border-gray-200 bg-white rounded-xl py-3.5 items-center flex-row justify-center gap-2"
           onPress={() => openCompose('staff_only')}
-          activeOpacity={0.85}
+          activeOpacity={0.82}
+          style={{
+            flex: 1,
+            backgroundColor: t.bgCard,
+            borderWidth: 1,
+            borderColor: t.border,
+            borderRadius: 16,
+            padding: 14,
+          }}
         >
-          <Ionicons name="people-outline" size={15} color="#374151" />
-          <Text className="text-gray-700 text-xs font-jakarta-bold">Staff Only</Text>
+          <View
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              backgroundColor: `${t.textSub}14`,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 10,
+            }}
+          >
+            <Ionicons name="people-outline" size={20} color={t.textSub} />
+          </View>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: t.text }}>
+            Staff Only
+          </Text>
+          <Text style={{ fontSize: 11, color: t.textMuted, marginTop: 2 }}>
+            Broadcast to staff
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <Text className="text-xs text-gray-400 font-jakarta-semi uppercase tracking-widest px-5 pt-4 pb-3">
+      {/* ── Section Label ──────────────────────────────────────── */}
+      <Text
+        style={{
+          fontSize: 11,
+          fontWeight: '600',
+          color: t.textMuted,
+          textTransform: 'uppercase',
+          letterSpacing: 1.2,
+          paddingHorizontal: 20,
+          paddingTop: 20,
+          paddingBottom: 12,
+        }}
+      >
         Recent Broadcasts
       </Text>
 
+      {/* ── Feed ───────────────────────────────────────────────── */}
       {feedLoading ? (
-        <ActivityIndicator color="#111827" style={{ marginTop: 32 }} />
+        <ActivityIndicator color={t.text} style={{ marginTop: 32 }} />
       ) : (
         <FlatList
           data={broadcasts}
@@ -129,19 +242,20 @@ export default function DeanHomeScreen() {
           renderItem={renderBroadcast}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
           ListEmptyComponent={
-            <View className="items-center mt-16">
-              <Text className="text-4xl mb-3">📋</Text>
-              <Text className="text-sm text-gray-400 font-jakarta text-center">No broadcasts yet.</Text>
+            <View style={{ alignItems: 'center', marginTop: 64 }}>
+              <Ionicons name="megaphone-outline" size={40} color={t.textMuted} style={{ marginBottom: 12 }} />
+              <Text style={{ fontSize: 14, color: t.textSub, textAlign: 'center' }}>
+                No broadcasts yet.
+              </Text>
             </View>
           }
         />
       )}
 
-      {/* Compose Modal */}
+      {/* ── Compose Modal (Bottom Sheet) ───────────────────────── */}
       <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
         <KeyboardAvoidingView
-          className="flex-1 justify-end"
-          style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
+          style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: t.overlay }}
           behavior="padding"
         >
           <ScrollView
@@ -149,61 +263,142 @@ export default function DeanHomeScreen() {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ justifyContent: 'flex-end', flexGrow: 1 }}
           >
-            <View className="bg-white rounded-t-3xl px-6 pt-4 pb-10">
-              <View className="w-10 h-1 bg-gray-200 rounded-full self-center mb-5" />
-              <Text className="text-lg text-gray-900 font-jakarta-extra mb-4">
-                New Broadcast — {AUDIENCE_LABELS[audience]}
+            <View
+              style={{
+                backgroundColor: t.sidebarBg,
+                borderTopLeftRadius: 24,
+                borderTopRightRadius: 24,
+                paddingHorizontal: 24,
+                paddingTop: 16,
+                paddingBottom: 40,
+              }}
+            >
+              {/* Drag handle */}
+              <View
+                style={{
+                  width: 40,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: t.border,
+                  alignSelf: 'center',
+                  marginBottom: 20,
+                }}
+              />
+
+              <Text style={{ fontSize: 17, fontWeight: '800', color: t.text, marginBottom: 16, letterSpacing: -0.3 }}>
+                New Broadcast
               </Text>
 
               {/* Audience Chips */}
-              <View className="flex-row gap-2 mb-4">
-                {Object.entries(AUDIENCE_LABELS).map(([key, label]) => (
-                  <TouchableOpacity
-                    key={key}
-                    onPress={() => setAudience(key)}
-                    className={`flex-1 py-2 rounded-xl border items-center ${audience === key ? 'bg-gray-900 border-gray-900' : 'bg-gray-50 border-gray-200'}`}
-                  >
-                    <Text className={`text-xs font-jakarta-semi ${audience === key ? 'text-white' : 'text-gray-500'}`}>
-                      {label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                {Object.entries(AUDIENCE).map(([key, aud]) => {
+                  const isActive = audience === key;
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      onPress={() => setAudience(key)}
+                      activeOpacity={0.75}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 8,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        alignItems: 'center',
+                        backgroundColor: isActive ? `${aud.color}18` : t.inputBg,
+                        borderColor: isActive ? `${aud.color}50` : t.inputBorder,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '600',
+                          color: isActive ? aud.color : t.textSub,
+                        }}
+                      >
+                        {aud.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
 
+              {/* Title Input */}
               <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-900 font-jakarta mb-3"
+                style={{
+                  backgroundColor: t.inputBg,
+                  borderWidth: 1,
+                  borderColor: t.inputBorder,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 13,
+                  fontSize: 14,
+                  color: t.inputText,
+                  marginBottom: 10,
+                }}
                 placeholder="Title"
-                placeholderTextColor="#CBD5E1"
+                placeholderTextColor={t.placeholder}
                 value={title}
                 onChangeText={setTitle}
               />
+
+              {/* Body Input */}
               <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm text-gray-900 font-jakarta mb-4"
+                style={{
+                  backgroundColor: t.inputBg,
+                  borderWidth: 1,
+                  borderColor: t.inputBorder,
+                  borderRadius: 12,
+                  paddingHorizontal: 16,
+                  paddingVertical: 13,
+                  fontSize: 14,
+                  color: t.inputText,
+                  height: 110,
+                  marginBottom: 16,
+                  textAlignVertical: 'top',
+                }}
                 placeholder="Message…"
-                placeholderTextColor="#CBD5E1"
+                placeholderTextColor={t.placeholder}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
-                style={{ height: 110 }}
                 value={body}
                 onChangeText={setBody}
               />
 
-              <View className="flex-row gap-3">
+              {/* Buttons */}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
                 <TouchableOpacity
-                  className="flex-1 border border-gray-200 rounded-xl py-3.5 items-center"
                   onPress={() => setModalVisible(false)}
+                  activeOpacity={0.8}
+                  style={{
+                    flex: 1,
+                    backgroundColor: t.btnSecondaryBg,
+                    borderWidth: 1,
+                    borderColor: t.btnSecondaryBorder,
+                    borderRadius: 12,
+                    paddingVertical: 13,
+                    alignItems: 'center',
+                  }}
                 >
-                  <Text className="text-sm text-gray-600 font-jakarta-semi">Cancel</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: t.btnSecondaryText }}>Cancel</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
-                  className={`flex-[2] bg-gray-900 rounded-xl py-3.5 items-center ${posting ? 'opacity-50' : ''}`}
                   onPress={handlePost}
                   disabled={posting}
+                  activeOpacity={0.82}
+                  style={{
+                    flex: 2,
+                    backgroundColor: t.btnPrimaryBg,
+                    borderRadius: 12,
+                    paddingVertical: 13,
+                    alignItems: 'center',
+                    opacity: posting ? 0.5 : 1,
+                  }}
                 >
                   {posting
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text className="text-white text-sm font-jakarta-bold">Post</Text>
+                    ? <ActivityIndicator color={t.btnPrimaryText} size="small" />
+                    : <Text style={{ fontSize: 14, fontWeight: '700', color: t.btnPrimaryText }}>Post</Text>
                   }
                 </TouchableOpacity>
               </View>
@@ -212,72 +407,146 @@ export default function DeanHomeScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Sidebar Modal */}
+      {/* ── Sidebar Modal ──────────────────────────────────────── */}
       <Modal visible={sidebarVisible} animationType="none" transparent onRequestClose={() => setSidebarVisible(false)}>
-        <View className="flex-1 flex-row" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
-          {/* Dismiss overlay (left side) */}
-          <TouchableOpacity className="flex-1" activeOpacity={1} onPress={() => setSidebarVisible(false)} />
+        <View style={{ flex: 1, flexDirection: 'row', backgroundColor: t.overlay }}>
+          {/* Dismiss overlay */}
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setSidebarVisible(false)} />
 
           {/* Sidebar Panel */}
-          <View className="w-72 bg-white absolute right-0 top-0 bottom-0 px-5 pt-16 pb-8 flex flex-col">
-
+          <View
+            style={{
+              width: 288,
+              backgroundColor: t.sidebarBg,
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              paddingHorizontal: 20,
+              paddingTop: 64,
+              paddingBottom: 32,
+              flexDirection: 'column',
+            }}
+          >
             {/* User Info */}
-            <View className="items-center mb-8">
-              <View className="w-12 h-12 rounded-full bg-gray-900 items-center justify-center mb-3">
-                <Text className="text-white text-base font-jakarta-bold">{initials}</Text>
+            <View style={{ alignItems: 'center', marginBottom: 28 }}>
+              <View
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  backgroundColor: `${DEAN_COLOR}50`,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 10,
+                }}
+              >
+                <Text style={{ fontSize: 18, fontWeight: '700', color: DEAN_COLOR }}>{initials}</Text>
               </View>
-              <Text className="text-sm text-gray-900 font-jakarta-bold text-center">
+              <Text style={{ fontSize: 15, fontWeight: '700', color: t.text, textAlign: 'center' }}>
                 {user?.displayName || 'Dean'}
               </Text>
-              <Text className="text-xs text-gray-400 font-jakarta mt-0.5 text-center">
+              <Text style={{ fontSize: 12, color: t.textMuted, marginTop: 2, textAlign: 'center' }}>
                 {user?.email || ''}
               </Text>
-              <View className="bg-gray-100 rounded-full px-3 py-1 mt-2">
-                <Text className="text-xs text-gray-600 font-jakarta-semi">Dean</Text>
+              <View
+                style={{
+                  backgroundColor: `${DEAN_COLOR}18`,
+                  borderRadius: 20,
+                  paddingHorizontal: 12,
+                  paddingVertical: 4,
+                  marginTop: 8,
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '600', color: DEAN_COLOR }}>Dean</Text>
               </View>
             </View>
 
             {/* Divider */}
-            <View className="h-px bg-gray-100 mb-4" />
+            <View style={{ height: 1, backgroundColor: t.border, marginBottom: 16 }} />
 
             {/* Menu Items */}
-            <View className="flex-1 gap-1">
+            <View style={{ flex: 1, gap: 2 }}>
               <TouchableOpacity
-                className="flex-row items-center gap-3 px-3 py-3.5 rounded-xl"
                 activeOpacity={0.7}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 13, borderRadius: 12 }}
               >
-                <Ionicons name="person-outline" size={20} color="#374151" />
-                <Text className="text-sm text-gray-700 font-jakarta-semi">Profile</Text>
+                <Ionicons name="person-outline" size={20} color={t.textSub} />
+                <Text style={{ fontSize: 14, fontWeight: '500', color: t.text }}>Profile</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="flex-row items-center gap-3 px-3 py-3.5 rounded-xl"
                 activeOpacity={0.7}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 13, borderRadius: 12 }}
               >
-                <Ionicons name="notifications-outline" size={20} color="#374151" />
-                <Text className="text-sm text-gray-700 font-jakarta-semi">Notifications</Text>
+                <Ionicons name="notifications-outline" size={20} color={t.textSub} />
+                <Text style={{ fontSize: 14, fontWeight: '500', color: t.text }}>Notifications</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="flex-row items-center gap-3 px-3 py-3.5 rounded-xl"
                 activeOpacity={0.7}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 13, borderRadius: 12 }}
               >
-                <Ionicons name="settings-outline" size={20} color="#374151" />
-                <Text className="text-sm text-gray-700 font-jakarta-semi">Settings</Text>
+                <Ionicons name="settings-outline" size={20} color={t.textSub} />
+                <Text style={{ fontSize: 14, fontWeight: '500', color: t.text }}>Settings</Text>
               </TouchableOpacity>
+
+              {/* Theme Toggle */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: 12,
+                  paddingVertical: 13,
+                  borderRadius: 12,
+                  gap: 12,
+                }}
+              >
+                <Ionicons name={isDark ? 'moon-outline' : 'sunny-outline'} size={20} color={t.textSub} />
+                <Text style={{ fontSize: 14, fontWeight: '500', color: t.text, flex: 1 }}>
+                  {isDark ? 'Dark Mode' : 'Light Mode'}
+                </Text>
+                <TouchableOpacity
+                  onPress={toggleTheme}
+                  activeOpacity={0.8}
+                  style={{
+                    width: 44,
+                    height: 26,
+                    borderRadius: 13,
+                    backgroundColor: isDark ? DEAN_COLOR : t.border,
+                    justifyContent: 'center',
+                    paddingHorizontal: 3,
+                    alignItems: isDark ? 'flex-end' : 'flex-start',
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      backgroundColor: '#FFFFFF',
+                    }}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Sign Out */}
             <TouchableOpacity
-              className="flex-row items-center gap-3 px-3 py-3.5 bg-red-50 rounded-xl"
-              activeOpacity={0.7}
-              onPress={() => {
-                setSidebarVisible(false);
-                signOut && signOut();
+              activeOpacity={0.75}
+              onPress={() => { setSidebarVisible(false); signOut && signOut(); }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 13,
+                borderRadius: 12,
+                backgroundColor: t.dangerBg,
               }}
             >
-              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-              <Text className="text-sm text-red-500 font-jakarta-semi">Sign Out</Text>
+              <Ionicons name="log-out-outline" size={20} color={t.danger} />
+              <Text style={{ fontSize: 14, fontWeight: '600', color: t.dangerText }}>Sign Out</Text>
             </TouchableOpacity>
           </View>
         </View>

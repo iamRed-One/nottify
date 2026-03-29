@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function RepHomeScreen({ navigation }) {
   const { user, signOut } = useAuth();
+  const { theme: t, isDark, toggleTheme } = useTheme();
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
   const currentYear = new Date().getFullYear();
@@ -20,88 +22,115 @@ export default function RepHomeScreen({ navigation }) {
     : 'R';
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <StatusBar style="dark" />
+    <View style={[styles.flex1, { backgroundColor: t.bg }]}>
+      <StatusBar style={t.statusBar} />
 
       {/* Header */}
-      <View className="bg-white border-b border-gray-100 px-5 pt-14 pb-4 flex-row items-start justify-between">
-        <View>
-          <Text className="text-xl text-gray-900 font-jakarta-extra">Course Rep</Text>
-          <Text className="text-sm text-gray-400 font-jakarta mt-0.5">
+      <View style={[styles.header, { backgroundColor: t.bg, borderBottomColor: t.border }]}>
+        <View style={styles.flex1}>
+          <Text style={[styles.headerTitle, { color: t.text }]}>Course Rep</Text>
+          <Text style={[styles.headerSub, { color: t.textSub }]}>
             {user?.department} · {user?.level ? `${user.level} Level` : ''}
           </Text>
         </View>
-        <TouchableOpacity className="p-1 mt-1" onPress={() => setSidebarVisible(true)} activeOpacity={0.7}>
-          <Ionicons name="menu-outline" size={24} color="#111827" />
+        <TouchableOpacity
+          style={styles.avatarBtn}
+          onPress={() => setSidebarVisible(true)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarText}>{initials}</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
       {/* Action cards */}
-      <View className="px-5 pt-6 gap-3">
+      <View style={styles.cardsContainer}>
+        {/* Manage Room — primary filled card */}
         <TouchableOpacity
-          className="bg-gray-900 rounded-xl py-4 flex-row items-center px-5 gap-3"
+          style={[styles.primaryCard, { backgroundColor: t.btnPrimaryBg }]}
           onPress={() => navigation.navigate('ManageRoom')}
           activeOpacity={0.85}
         >
-          <Ionicons name="albums-outline" size={18} color="#fff" />
-          <View className="flex-1">
-            <Text className="text-white text-sm font-jakarta-bold">Manage Room</Text>
-            <Text className="text-gray-400 text-xs font-jakarta mt-0.5">View notices, post updates</Text>
+          <View style={styles.primaryIconBox}>
+            <Ionicons name="albums-outline" size={22} color="#fff" />
           </View>
-          <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+          <View style={styles.cardBody}>
+            <Text style={[styles.primaryCardTitle, { color: t.btnPrimaryText }]}>Manage Room</Text>
+            <Text style={styles.primaryCardSub}>View notices, post updates</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#fff" />
         </TouchableOpacity>
 
+        {/* Room Feed — secondary outlined card */}
         <TouchableOpacity
-          className="bg-white border border-gray-200 rounded-xl py-4 flex-row items-center px-5 gap-3"
+          style={[styles.secondaryCard, { backgroundColor: t.bgCard, borderColor: t.border }]}
           onPress={() => navigation.navigate('RoomFeed', { roomId })}
           activeOpacity={0.85}
         >
-          <Ionicons name="chatbubbles-outline" size={18} color="#374151" />
-          <View className="flex-1">
-            <Text className="text-gray-900 text-sm font-jakarta-bold">Room Feed</Text>
-            <Text className="text-gray-400 text-xs font-jakarta mt-0.5">View all room notices</Text>
+          <View style={[styles.secondaryIconBox, { backgroundColor: t.bgElevated, borderColor: t.border }]}>
+            <Ionicons name="chatbubbles-outline" size={22} color={t.textSub} />
           </View>
-          <Ionicons name="chevron-forward" size={16} color="#D1D5DB" />
+          <View style={styles.cardBody}>
+            <Text style={[styles.secondaryCardTitle, { color: t.text }]}>Room Feed</Text>
+            <Text style={[styles.secondaryCardSub, { color: t.textSub }]}>View all room notices</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={t.textMuted} />
         </TouchableOpacity>
       </View>
 
       {/* Sidebar */}
-      <Modal visible={sidebarVisible} animationType="none" transparent onRequestClose={() => setSidebarVisible(false)}>
-        <View className="flex-1 flex-row" style={{ backgroundColor: 'rgba(0,0,0,0.35)' }}>
-          <TouchableOpacity className="flex-1" activeOpacity={1} onPress={() => setSidebarVisible(false)} />
-          <View className="w-72 bg-white absolute right-0 top-0 bottom-0 px-5 pt-16 pb-8 flex flex-col">
-            <View className="items-center mb-8">
-              <View className="w-12 h-12 rounded-full bg-gray-900 items-center justify-center mb-3">
-                <Text className="text-white text-base font-jakarta-bold">{initials}</Text>
+      <Modal
+        visible={sidebarVisible}
+        animationType="none"
+        transparent
+        onRequestClose={() => setSidebarVisible(false)}
+      >
+        <View style={[styles.modalOverlay, { backgroundColor: t.overlay }]}>
+          <TouchableOpacity style={styles.flex1} activeOpacity={1} onPress={() => setSidebarVisible(false)} />
+          <View style={[styles.sidebar, { backgroundColor: t.sidebarBg, borderLeftColor: t.border }]}>
+            {/* Sidebar avatar + identity */}
+            <View style={styles.sidebarProfile}>
+              <View style={styles.sidebarAvatarCircle}>
+                <Text style={styles.sidebarAvatarText}>{initials}</Text>
               </View>
-              <Text className="text-sm text-gray-900 font-jakarta-bold text-center">{user?.displayName || 'Course Rep'}</Text>
-              <Text className="text-xs text-gray-400 font-jakarta mt-0.5 text-center">{user?.email || ''}</Text>
-              <View className="bg-gray-100 rounded-full px-3 py-1 mt-2">
-                <Text className="text-xs text-gray-600 font-jakarta-semi">Course Rep</Text>
+              <Text style={[styles.sidebarName, { color: t.text }]}>{user?.displayName || 'Course Rep'}</Text>
+              <Text style={[styles.sidebarEmail, { color: t.textSub }]}>{user?.email || ''}</Text>
+              <View style={styles.roleBadge}>
+                <Text style={styles.roleBadgeText}>Course Rep</Text>
               </View>
             </View>
-            <View className="h-px bg-gray-100 mb-4" />
-            <View className="flex-1 gap-1">
-              <TouchableOpacity className="flex-row items-center gap-3 px-3 py-3.5 rounded-xl" activeOpacity={0.7}>
-                <Ionicons name="person-outline" size={20} color="#374151" />
-                <Text className="text-sm text-gray-700 font-jakarta-semi">Profile</Text>
-              </TouchableOpacity>
-              <TouchableOpacity className="flex-row items-center gap-3 px-3 py-3.5 rounded-xl" activeOpacity={0.7}>
-                <Ionicons name="notifications-outline" size={20} color="#374151" />
-                <Text className="text-sm text-gray-700 font-jakarta-semi">Notifications</Text>
-              </TouchableOpacity>
-              <TouchableOpacity className="flex-row items-center gap-3 px-3 py-3.5 rounded-xl" activeOpacity={0.7}>
-                <Ionicons name="settings-outline" size={20} color="#374151" />
-                <Text className="text-sm text-gray-700 font-jakarta-semi">Settings</Text>
-              </TouchableOpacity>
-            </View>
+
+            <View style={[styles.divider, { backgroundColor: t.border }]} />
+
+            {/* Theme toggle */}
             <TouchableOpacity
-              className="flex-row items-center gap-3 px-3 py-3.5 bg-red-50 rounded-xl"
+              style={[styles.sidebarRow, { borderColor: t.border }]}
+              activeOpacity={0.7}
+              onPress={toggleTheme}
+            >
+              <View style={[styles.sidebarRowIconBox, { backgroundColor: t.bgElevated }]}>
+                <Ionicons
+                  name={isDark ? 'sunny-outline' : 'moon-outline'}
+                  size={18}
+                  color={t.textSub}
+                />
+              </View>
+              <Text style={[styles.sidebarRowLabel, { color: t.text }]}>
+                {isDark ? 'Light Mode' : 'Dark Mode'}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.flex1} />
+
+            {/* Sign out */}
+            <TouchableOpacity
+              style={[styles.signOutRow, { backgroundColor: t.dangerBg, borderColor: t.danger + '30' }]}
               activeOpacity={0.7}
               onPress={() => { setSidebarVisible(false); signOut && signOut(); }}
             >
-              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-              <Text className="text-sm text-red-500 font-jakarta-semi">Sign Out</Text>
+              <Ionicons name="log-out-outline" size={20} color={t.danger} />
+              <Text style={[styles.signOutText, { color: t.danger }]}>Sign Out</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -109,3 +138,204 @@ export default function RepHomeScreen({ navigation }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  flex1: { flex: 1 },
+
+  // Header
+  header: {
+    paddingTop: 56,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: 'PlusJakartaSans_800ExtraBold',
+    letterSpacing: -0.4,
+  },
+  headerSub: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    marginTop: 2,
+  },
+  avatarBtn: { padding: 2 },
+  avatarCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F9731650',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#F97316',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+
+  // Cards
+  cardsContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    gap: 12,
+  },
+  primaryCard: {
+    borderRadius: 16,
+    padding: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  primaryIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardBody: { flex: 1 },
+  primaryCardTitle: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    letterSpacing: -0.2,
+  },
+  primaryCardSub: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 2,
+  },
+  secondaryCard: {
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  secondaryIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryCardTitle: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    letterSpacing: -0.2,
+  },
+  secondaryCardSub: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    marginTop: 2,
+  },
+
+  // Sidebar / Modal
+  modalOverlay: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  sidebar: {
+    width: 288,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    paddingTop: 64,
+    paddingBottom: 32,
+    paddingHorizontal: 20,
+    flexDirection: 'column',
+    borderLeftWidth: 1,
+  },
+  sidebarProfile: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  sidebarAvatarCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#F9731650',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  sidebarAvatarText: {
+    color: '#F97316',
+    fontSize: 18,
+    fontFamily: 'PlusJakartaSans_700Bold',
+  },
+  sidebarName: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    textAlign: 'center',
+  },
+  sidebarEmail: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    marginTop: 3,
+    textAlign: 'center',
+  },
+  roleBadge: {
+    backgroundColor: '#F9731618',
+    borderRadius: 99,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginTop: 10,
+  },
+  roleBadgeText: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: '#F97316',
+    letterSpacing: 0.2,
+  },
+  divider: {
+    height: 1,
+    marginBottom: 16,
+  },
+
+  // Theme toggle row
+  sidebarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 13,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  sidebarRowIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sidebarRowLabel: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+
+  // Sign out
+  signOutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  signOutText: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+});

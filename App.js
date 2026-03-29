@@ -14,6 +14,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
+import { ThemeProvider } from './src/contexts/ThemeContext';
 import { syncPushToken } from './src/services/notificationService';
 
 // Auth screens
@@ -156,8 +157,8 @@ function RootNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#2563EB" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#090909' }}>
+        <ActivityIndicator size="large" color="#FFFFFF" />
       </View>
     );
   }
@@ -200,10 +201,12 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
